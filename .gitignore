@@ -1,0 +1,19 @@
+﻿# build artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# example / test binaries
+examples/basic_usage
+examples/basic_usage.exe
+tests/test_csv
+tests/test_csv.exe
+
+# generated csv files
+*.csv
+
+# editor / OS noise
+.vscode/
+.idea/
+.DS_Store

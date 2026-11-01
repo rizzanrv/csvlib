@@ -1,31 +1,43 @@
-CC      = gcc
-CFLAGS  = -Wall -Wextra -Wpedantic -std=c99 -Iinclude -O2
-LDFLAGS =
+CC       ?= cc
+AR       ?= ar
+STD      ?= -std=c99
+CPPFLAGS ?= -Iinclude
+CFLAGS   ?= -Wall -Wextra -Wpedantic -O2
+PREFIX   ?= /usr/local
 
-SRC     = src/csv.c
-OBJ     = $(SRC:.c=.o)
-LIB     = libcsv.a
-EXAMPLE = examples/basic_usage
+SRC         = src/csv.c
+OBJ         = $(SRC:.c=.o)
+LIB         = libcsv.a
+TEST_BIN    = tests/test_csv
+EXAMPLE_BIN = examples/basic_usage
 
-.PHONY: all clean example
+.PHONY: all test example install clean
 
 all: $(LIB)
 
 $(LIB): $(OBJ)
-	@ar rcs $@ $^
-	@echo "Library built: $@"
+	$(AR) rcs $@ $(OBJ)
 
-example: $(EXAMPLE)
-	$(CC) $(CFLAGS) -o $@ $< -L. -lcsv
-	@echo "Example compiled: $@"
+%.o: %.c include/csv.h
+	$(CC) $(STD) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(EXAMPLE): $(LIB)
-	@$(MAKE) $@ -s
+$(TEST_BIN): tests/test_csv.c $(SRC) include/csv.h
+	$(CC) $(STD) $(CPPFLAGS) $(CFLAGS) -g -o $@ tests/test_csv.c $(SRC)
+
+$(EXAMPLE_BIN): examples/basic_usage.c $(LIB) include/csv.h
+	$(CC) $(STD) $(CPPFLAGS) $(CFLAGS) -o $@ examples/basic_usage.c -L. -lcsv
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+example: $(EXAMPLE_BIN)
+	./$(EXAMPLE_BIN)
+
+install: $(LIB)
+	install -d $(DESTDIR)$(PREFIX)/lib $(DESTDIR)$(PREFIX)/include
+	install -m 644 $(LIB) $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 include/csv.h $(DESTDIR)$(PREFIX)/include/
 
 clean:
-	rm -f $(OBJ) $(LIB) $(EXAMPLE) *.csv
-
-install:
-	cp $(LIB) /usr/local/lib/
-	cp include/csv.h /usr/local/include/
-	@echo "Installed to /usr/local"
+	rm -f $(OBJ) $(LIB) $(TEST_BIN) $(EXAMPLE_BIN)
+	rm -f tests/*.csv *.csv
